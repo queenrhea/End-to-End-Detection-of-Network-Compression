@@ -1,0 +1,1 @@
+{"serverip": "INADDR_ANY", "srcportudp": 9876, "destportudp": 8765, "destporttcphead": "x", "destporttcptail": "y", "portnumtcp": "echoServPort", "payload": 1024, "intermtime": 15, "numudppackets": 60000, "ttl": 255}
