@@ -1,3 +1,11 @@
+//UDP AND IP HEADER CHECKSUMS:
+//Under the #include:
+// Define some constants.
+#define IP4_HDRLEN 20         // IPv4 header length
+#define UDP_HDRLEN  8         // UDP header length, excludes data
+
+//-----------------------------------------------
+//-----------------------------------------------
 //
 //  tcpsocket.c
 //  client-angie
