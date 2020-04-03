@@ -7,22 +7,24 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
-#define PORT     22
+#define PORT 9876
 #define MAXLINE 1025
 
-int main() {
+void main() {
     int client_socket;
     char buffer[MAXLINE];
 
     struct sockaddr_in servaddr;
 
-    char *hello = "Hello from client";
+    //char *hello = "Hello from client";
 
     //Creating socket file descriptor
     if ((client_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0 ) {
         perror("socket creation failed");
         exit(EXIT_FAILURE);
     }
+
+    printf("Client socket created successfully\n");
 
     memset(&servaddr, 0, sizeof(servaddr));
     
@@ -31,31 +33,32 @@ int main() {
     servaddr.sin_port = htons(PORT);
     servaddr.sin_addr.s_addr = inet_addr("127.0.0.1"); //Local host machine IP
  
-    sendto(client_socket, (const char *)hello, strlen(hello), 0, (const struct sockaddr *) &servaddr, sizeof(servaddr));
-    printf("Hello message sent.\n");
+    // sendto(client_socket, (const char *)hello, strlen(hello), 0, (const struct sockaddr *) &servaddr, sizeof(servaddr));
+    // printf("Hello message sent.\n");
 
     //Make connection to server
-    connect(client_socket, (struct sockaddr*) &serveraddr, sizeof(serveraddr));
+    connect(client_socket, (struct sockaddr*) &servaddr, sizeof(servaddr));
+    printf("Connected to the server\n");
         
     recv(client_socket, buffer, MAXLINE, 0);
     
     printf("Data Received: %s\n", buffer);
 
-    FILE *fp = fopen("myconfig.json", "r"); 
+    // FILE *fp = fopen("myconfig.json", "r"); 
     
-    if(fp == NULL){ 
-        perror("File not found"); 
-        return 0; 
-    } 
+    // if(fp == NULL){ 
+    //     perror("File not found"); 
+    //     return 0; 
+    // } 
 
-    while((bytes_read = fread(buffer, sizeof(buffer), 1, fp))>0){ 
-        //Include checks for if cannot read file
-        send(client_socket, buffer, bytes_read, 0);  //send config. file contents to server
-    } 
+    // while((bytes_read = fread(buffer, sizeof(buffer), 1, fp))>0){ 
+    //     //Include checks for if cannot read file
+    //     send(client_socket, buffer, bytes_read, 0);  //send config. file contents to server
+    // } 
 
-    fclose(fp);
+    // fclose(fp);
 
 
-    close(sockfd);
-    return 0;
+    // close(client_socket);
+    // return 0;
 }
