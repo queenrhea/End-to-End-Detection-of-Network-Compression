@@ -7,14 +7,14 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
-#define PORT 22
+#define PORT 9876
 #define MAXLINE 1025
 
-int main() {
+void main() {
     int server_socket, new_socket;
     struct sockaddr_in servaddr, new_servaddr;
 
-    char *hello = "Hello from server";
+    //char *hello = "Hello from server";
 
     socklen_t addr_size;
     char buffer[MAXLINE];
@@ -26,6 +26,8 @@ int main() {
         perror("socket creation failed");
         exit(EXIT_FAILURE);
     }
+
+    printf("Server Socket Created Successfully\n");
 
     memset(&servaddr, 0, sizeof(servaddr));
 
@@ -43,26 +45,30 @@ int main() {
         exit(EXIT_FAILURE);
     }
 
+    printf("Bind to Port Number %d\n", 9876);
+
     //Put the server socket in a passive mode, where it waits for the client to approach //the server to make a connection
-    listen(server_socket, 1);
+    listen(server_socket, 5);
+    printf("Listening...\n");
+
     addr_size = sizeof(new_servaddr);
 
     //Connection is established between client and server, and they are ready to transfer data
-    new_socket = accept(server_socket, (struct sockaddr*)&serveraddr, sizeof(serveraddr));
+    new_socket = accept(server_socket, (struct sockaddr*)&servaddr, sizeof(servaddr));
+
+    strcpy(buffer, "Hello\n");
 
     send(new_socket, buffer, strlen(buffer), 0);
 
-    recvfrom(server_socket, buffer, MAXLINE, 0);
+    // recv(server_socket, buffer, MAXLINE, 0);
     
-    printf("Client : %s\n", buffer);
+    // printf("Client: %s\n", buffer);
 
-    sendto(new_socket, (const char *)hello, strlen(hello), 0, (const struct sockaddr *) &new_servaddr, sizeof(new_servaddr));
+    // sendto(new_socket, (const char *)hello, strlen(hello), 0, (const struct sockaddr *) &new_servaddr, sizeof(new_servaddr));
 
-    printf("Hello message sent.\n");
+    //printf("Hello message sent.\n");
 
    
-
-    
     //FILE* fp = fopen("myconfig.json", "w"); 
 
     //total=0; 
@@ -80,6 +86,6 @@ int main() {
     
     //fclose(fp); 
    
-    close(server_socket);
-    return 0;
+    //close(server_socket);
+    //return 0;
 }
