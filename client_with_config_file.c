@@ -29,7 +29,7 @@ int main() {
     //Server information
     servaddr.sin_family = AF_INET;
     servaddr.sin_port = htons(PORT);
-    servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    servaddr.sin_addr.s_addr = inet_addr("127.0.0.1"); //Local host machine IP
  
     sendto(client_socket, (const char *)hello, strlen(hello), 0, (const struct sockaddr *) &servaddr, sizeof(servaddr));
     printf("Hello message sent.\n");
