@@ -35,7 +35,7 @@ int main() {
     printf("Hello message sent.\n");
 
     //Make connection to server
-    connect(client_socket, (struct sockaddr*)&serveraddr, sizeof(serveraddr));
+    connect(client_socket, (struct sockaddr*) &serveraddr, sizeof(serveraddr));
         
     recv(client_socket, buffer, MAXLINE, 0);
     
@@ -44,13 +44,13 @@ int main() {
     FILE *fp = fopen("myconfig.json", "r"); 
     
     if(fp == NULL){ 
-        perror("File"); 
+        perror("File not found"); 
         return 0; 
     } 
 
     while((bytes_read = fread(buffer, sizeof(buffer), 1, fp))>0){ 
         //Include checks for if cannot read file
-        send(sockfd, buffer, bytes_read, 0); 
+        send(client_socket, buffer, bytes_read, 0);  //send config. file contents to server
     } 
 
     fclose(fp);
