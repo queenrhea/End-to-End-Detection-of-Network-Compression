@@ -77,6 +77,8 @@ void main() {
      //   while((b = recv(, buffer, 1024,0))> 0 ) { 
      //       total += b; 
      //       fwrite(buffer, 1, b, fp); 
+    //         read(new_socket, buffer, 255);
+    //         fprintf(fp, "%s", buffer);
    // } 
    // else {
      //   perror("File not found");
