@@ -12,6 +12,7 @@
 
 void main() {
     int server_socket, new_socket;
+    int confd = 0;
     struct sockaddr_in servaddr, new_servaddr;
 
     //char *hello = "Hello from server";
@@ -69,12 +70,13 @@ void main() {
     //printf("Hello message sent.\n");
 
    
-    //FILE* fp = fopen("myconfig.json", "w"); 
+    //FILE* fp = fopen("myconfig.json", "r"); 
+    //confd = accept(server_socket, (struct sockaddr*)NULL, NULL);
 
     //total=0; 
     
     //if(fp != NULL){ 
-     //   while((b = recv(, buffer, 1024,0))> 0 ) { 
+     //   while((b = recv(confd, buffer, 1024,0))> 0 ) { 
      //       total += b; 
      //       fwrite(buffer, 1, b, fp); 
     //         read(new_socket, buffer, 255);
