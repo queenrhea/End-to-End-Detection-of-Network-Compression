@@ -7,89 +7,104 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
-#define PORT 9876
-#define MAXLINE 1025
+#define PORT     9876
+#define MAXLINE 65536
 
-void main() {
-    int server_socket, new_socket;
-    int confd = 0;
-    struct sockaddr_in servaddr, new_servaddr;
-
-    //char *hello = "Hello from server";
-
-    socklen_t addr_size;
+int main() {
+    int sockfd;
     char buffer[MAXLINE];
-
-
-
+    char *hello = "Hello from server";
+    struct sockaddr_in servaddr, cliaddr;
+    
     // Creating socket file descriptor
-    if ((server_socket = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
+    if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
         perror("socket creation failed");
         exit(EXIT_FAILURE);
     }
-
-    printf("Server Socket Created Successfully\n");
-
+    
     memset(&servaddr, 0, sizeof(servaddr));
-
-    //Server information
-    servaddr.sin_family = AF_INET;
-    servaddr.sin_port = htons(PORT);
+    memset(&cliaddr, 0, sizeof(cliaddr));
+    
+    // Filling server information
+    servaddr.sin_family = AF_INET; // IPv4
     servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
-
-
-    //Bind the socket with the server address
-    if (bind(server_socket, (const struct sockaddr *)&servaddr,
+    servaddr.sin_port = htons(PORT);
+    
+    // Bind the socket with the server address
+    if ( bind(sockfd, (const struct sockaddr *)&servaddr,
             sizeof(servaddr)) < 0 )
     {
         perror("bind failed");
         exit(EXIT_FAILURE);
     }
-
-    printf("Bind to Port Number %d\n", 9876);
-
-    //Put the server socket in a passive mode, where it waits for the client to approach //the server to make a connection
-    listen(server_socket, 5);
-    printf("Listening...\n");
-
-    addr_size = sizeof(new_servaddr);
-
-    //Connection is established between client and server, and they are ready to transfer data
-    new_socket = accept(server_socket, (struct sockaddr*)&servaddr, sizeof(servaddr));
-
-    strcpy(buffer, "Hello\n");
-
-    send(new_socket, buffer, strlen(buffer), 0);
-
-    // recv(server_socket, buffer, MAXLINE, 0);
     
-    // printf("Client: %s\n", buffer);
+    int len, n;
 
-    // sendto(new_socket, (const char *)hello, strlen(hello), 0, (const struct sockaddr *) &new_servaddr, sizeof(new_servaddr));
+    len = sizeof(cliaddr); //len is value/resuslt
 
-    //printf("Hello message sent.\n");
+    n = recvfrom(sockfd, (char *)buffer, MAXLINE,
+                MSG_WAITALL, ( struct sockaddr *) &cliaddr,
+                &len);
+    buffer[n] = '\0';
+    printf("Client : %s\n", buffer);
+    sendto(sockfd, (const char *)hello, strlen(hello),
+        0, (const struct sockaddr *) &cliaddr,
+            len);
+    printf("Hello message sent.\n");
 
-   
-    //FILE* fp = fopen("myconfig.json", "r"); 
-    //confd = accept(server_socket, (struct sockaddr*)NULL, NULL);
 
-    //total=0; 
-    
-    //if(fp != NULL){ 
-     //   while((b = recv(confd, buffer, 1024,0))> 0 ) { 
-     //       total += b; 
-     //       fwrite(buffer, 1, b, fp); 
-    //         read(new_socket, buffer, 255);
+    int confd = 0;
+
+    FILE* fp = fopen("myconfig.json", "r"); 
+    confd = accept(sockfd, (struct sockaddr*)NULL, NULL);
+
+    int total=0, b = 0;
+
+    // if(fp != NULL){ 
+    //     printf("hewllo1");
+    //     while((b = recv(confd, buffer, 1024,0))> 0 ) { 
+    //         printf("hewllo2");
+    //         total += b; 
+    //        //fwrite(buffer, 1, b, fp); 
+    //         read(sockfd, buffer, 100);
+    //         printf("hewllo3");
     //         fprintf(fp, "%s", buffer);
-   // } 
-   // else {
-     //   perror("File not found");
-   // }
+    //         printf("hewllofinal");
+    //     }
+    // }
+
+    if(fp != NULL){ 
+        printf("hello1");
+        while((b=recvfrom(confd, buffer, MAXLINE,
+                MSG_WAITALL, ( struct sockaddr *) &cliaddr,
+                &len)>0)) { 
+            printf("hello2");
+            total += b; 
+           //fwrite(buffer, 1, b, fp); 
+            read(sockfd, buffer, 100);
+            printf("hello3");
+            fprintf(fp, "%s", buffer);
+            printf("hellofinal");
+        }
+    }
+       
+       else {
+        perror("File not found");
+    }
+
+    printf("Received bytes: %d\n",total); 
+
+    if (b<0) {
+        perror(" ");
+        fclose(fp);
+    }
+
+    else {
+        perror("File");
+    }
+    close(confd);
     
-   // printf("Received bytes: %d\n",total); 
+    fclose(fp); 
     
-    //fclose(fp); 
-   
-    //close(server_socket);
-    //return 0;
+    return 0;
 }
