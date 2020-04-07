@@ -7,58 +7,61 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
-#define PORT 9876
-#define MAXLINE 1025
+#define PORT     9876
+#define MAXLINE 65536
 
-void main() {
-    int client_socket;
+int main() {
+    int sockfd;
     char buffer[MAXLINE];
+    char *hello = "Hello from client";
+    struct sockaddr_in     servaddr;
 
-    struct sockaddr_in servaddr;
-
-    //char *hello = "Hello from client";
-
-    //Creating socket file descriptor
-    if ((client_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0 ) {
+    // Creating socket file descriptor
+    if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
         perror("socket creation failed");
         exit(EXIT_FAILURE);
     }
 
-    printf("Client socket created successfully\n");
-
     memset(&servaddr, 0, sizeof(servaddr));
     
-    //Server information
+    // Filling server information
     servaddr.sin_family = AF_INET;
     servaddr.sin_port = htons(PORT);
-    servaddr.sin_addr.s_addr = inet_addr("127.0.0.1"); //Local host machine IP
- 
-    // sendto(client_socket, (const char *)hello, strlen(hello), 0, (const struct sockaddr *) &servaddr, sizeof(servaddr));
-    // printf("Hello message sent.\n");
-
-    //Make connection to server
-    connect(client_socket, (struct sockaddr*) &servaddr, sizeof(servaddr));
-    printf("Connected to the server\n");
+    servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    
+    int n, len;
+    
+    sendto(sockfd, (const char *)hello, strlen(hello),
+        0, (const struct sockaddr *) &servaddr,
+            sizeof(servaddr));
+    printf("Hello message sent.\n");
         
-    recv(client_socket, buffer, MAXLINE, 0);
+    n = recvfrom(sockfd, (char *)buffer, MAXLINE,
+                MSG_WAITALL, (struct sockaddr *) &servaddr,
+                &len);
+    buffer[n] = '\0';
+    printf("Server : %s\n", buffer);
+
+    int bytes_read = connect(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr));
+    if (bytes_read==-1) {
+        perror("Connect");
+        return 1;
+    }
+
+    FILE *fp = fopen("myconfig.json", "r"); 
     
-    printf("Data Received: %s\n", buffer);
+    if(fp == NULL){ 
+        perror("File not found"); 
+        return 0; 
+    } 
 
-    // FILE *fp = fopen("myconfig.json", "r"); 
-    
-    // if(fp == NULL){ 
-    //     perror("File not found"); 
-    //     return 0; 
-    // } 
+    while((bytes_read = fread(buffer, sizeof(buffer), 1, fp))>0){ 
+        //Include checks for if cannot read file
+        send(sockfd, buffer, bytes_read, 0);  //send config. file contents to server
+    } 
 
-    // while((bytes_read = fread(buffer, sizeof(buffer), 1, fp))>0){ 
-    //     //Include checks for if cannot read file
-    //     send(client_socket, buffer, bytes_read, 0);  //send config. file contents to server
-    // } 
+    fclose(fp);
 
-    // fclose(fp);
-
-
-    // close(client_socket);
-    // return 0;
+    close(sockfd);
+    return 0;
 }
