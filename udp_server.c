@@ -12,8 +12,6 @@
 
 
 void print_udp_packet(unsigned char*, int);
-void ProcessPacket(unsigned char*, int);
-void PrintData (unsigned char* , int);
 
 int sockt;
 int i,j;
