@@ -1,3 +1,5 @@
+#define PCKT_LEN 8192
+
 
 struct sockaddr_in serv_addr; // Server address data structure.
 struct hostent *server;      // Server data structure.
