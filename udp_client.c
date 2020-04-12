@@ -12,21 +12,18 @@ server = gethostbyname( host_name ); // Convert URL to IP.
 if ( server == NULL )
   error( "ERROR, no such host" );
 
-// Zero out the server address structure.
-
-bzero( ( char* ) &serv_addr, sizeof( serv_addr ) );
 
 serv_addr.sin_family = AF_INET;
 
-// Copy the server's IP address to the server address structure.
-
-bcopy( ( char* )server->h_addr, ( char* ) &serv_addr.sin_addr.s_addr, server->h_length );
-
-// Convert the port number integer to network big-endian style and save it to the server address structure.
-
-serv_addr.sin_port = htons( portno );
 
 
 
 int sendto(int sockfd, const void *msg, int len, unsigned int flags,
 const struct sockaddr *to, socklen_t tolen);
+
+
+// buffer to hold the packet
+    char buffer[PCKT_LEN];
+
+// set the buffer to 0 for all bytes
+    memset(buffer, 0, PCKT_LEN);
