@@ -37,7 +37,8 @@ int main() {
 	// set the buffer to 0 for all bytes
     memset(buffer_p, 0, PCKT_LEN);
     
-    int n, len, rc;
+    int n, rc;
+    unsigned int len;
     
     sendto(sockfd, (const char *)hello, strlen(hello),
         0, (const struct sockaddr *) &servaddr,
@@ -47,7 +48,7 @@ int main() {
     //sendto(sockfd, buffer_p, len, unsigned int flags,
 //const struct sockaddr *to, socklen_t tolen);
 
-    if( rc = sendto(sockfd, buffer_p, sizeof(buffer_p),0,(const struct sockaddr *) &servaddr,sizeof(servaddr)) < 0 ) {
+    if( rc == sendto(sockfd, buffer_p, sizeof(buffer_p),0,(const struct sockaddr *) &servaddr,sizeof(servaddr)) != 0 ) {
 			/* buffers aren't available locally at the moment,
 			 * try again.
 			 */
