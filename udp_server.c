@@ -1,84 +1,92 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <errno.h>
 
-#include<stdio.h> //For standard things
-#include<stdlib.h>    //malloc
-#include<string.h>    //memset
-#include<netinet/ip_icmp.h>   //Provides declarations for icmp header
-#include<netinet/udp.h>   //Provides declarations for udp header
-#include<netinet/tcp.h>   //Provides declarations for tcp header
-#include<netinet/ip.h>    //Provides declarations for ip header
-#include<sys/socket.h>
-#include<arpa/inet.h>
-#define PORT 6343
+#define PORT     9876
+#define MAXLINE 65536
 
+#define MAXBUF  10 * 1024
 
-void print_udp_packet(unsigned char*, int);
+int main() {
+    int sockfd;
+    char buffer[MAXLINE];
+    char *hello = "Hello from server";
+    struct sockaddr_in servaddr, cliaddr;
+    extern int errno;
 
-int sockt;
-int i,j;
-
-struct sockaddr_in source,dest; 
-
-int main()
-{
-    int saddr_size,data_size;
-    struct sockaddr_in saddr;
-    struct sockaddr_in daddr;
-
-    //struct in_addr in;
-    unsigned char *buffer = (unsigned char *)malloc(65536); // Its Big ! Malloc allocates a block of size bytes of memory,returning a pointer to the begining of the block
-
-    struct udphdr *udph = (struct udphdr*)(buffer + sizeof(struct iphdr));
-    struct iphdr *iph = (struct iphdr *)buffer;
-    memset(&source,0,sizeof(source));
-    source.sin_addr.s_addr = iph ->saddr;
-    memset(&dest,0,sizeof(dest));
-    dest.sin_addr.s_addr = iph->daddr;
-    unsigned short iphdrlen = iph->ihl*4;
-
-
-    printf("Starting...\n");
-    //Create a socket
-    sockt = socket(AF_INET ,SOCK_DGRAM ,0);
-    if(sockt < 0)
-    {
-        printf("Socket Error\n");
-        return 1;
+    char buf[MAXBUF];
+    
+    // Creating socket file descriptor
+    if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
+        perror("socket creation failed");
+        exit(EXIT_FAILURE);
     }
-    memset((char *)&daddr,0,sizeof(daddr));
-
-    //prepare the sockaddr_in structure
-    daddr.sin_family = AF_INET;
-    daddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    daddr.sin_port = htons(PORT);
-
-    //Bind
-    if(bind(sockt,(struct sockaddr *)&daddr, sizeof(daddr))<0)
+    
+    memset(&servaddr, 0, sizeof(servaddr));
+    memset(&cliaddr, 0, sizeof(cliaddr));
+    
+    // Filling server information
+    servaddr.sin_family = AF_INET; // IPv4
+    servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    servaddr.sin_port = htons(PORT);
+    
+    // Bind the socket with the server address
+    if ( bind(sockfd, (const struct sockaddr *)&servaddr,
+            sizeof(servaddr)) < 0 )
     {
-      printf("bind failed");
-      return 1;
-    }
-    printf("bind done");
-
-    while(1)
-    {
-    saddr_size = sizeof saddr;
-    printf("waiting for data...");
-
-    //Receive a packet
-    data_size = recvfrom(sockt , buffer ,65536 , 0 , (struct sockaddr*) &saddr , (socklen_t*)&saddr_size);
-    if(data_size <0)
-    {
-      printf("Packets not recieved \n");
-      return 1;
+        perror("bind failed");
+        exit(EXIT_FAILURE);
     }
 
-    printf("Packets arrived from %d \n",ntohs(daddr.sin_port));
-    printf("\t Source Port : %d , Destination Port : %d, UDP Length : %d,Protocol : %d, total length : %d \n", ntohs(udph->source), ntohs(udph->dest), ntohs(data_size), (unsigned int)iph->protocol, ntohs(iph->tot_len)); 
+    
+    int n;
+    unsigned int len;
+
+    len = sizeof(cliaddr); //len is value/resuslt
+
+    n = recvfrom(sockfd, (char *)buffer, MAXLINE,
+                MSG_WAITALL, ( struct sockaddr *) &cliaddr,
+                &len);
+    buffer[n] = '\0';
+    printf("Client : %s\n", buffer);
+    sendto(sockfd, (const char *)hello, strlen(hello),
+        0, (const struct sockaddr *) &cliaddr,
+            len);
+    printf("Hello message sent.\n");
+
+
+   /* do forever */
+    int rc;
+
+    if (rc==recvfrom(sockfd, buf, MAXBUF, 0, (const struct sockaddr *)&cliaddr, &len) < 0) {
+        printf("server error: errno %d\n",errno); 
+        //printf("server error: errno %d\n",errno);
+        perror("reading datagram");
+        exit(1);
     }
-    close(sockt);
-    printf("Finished");
+
+    //printf("udpserver: got packet");
+
+    // int data_size, saddr_size;
+
+    
+    // saddr_size = sizeof(servaddr);
+    // printf("waiting for data...");
+    // data_size = recvfrom(sockfd, buf, MAXBUF, 0, (struct sockaddr*) &servaddr, (socklen_t*)&saddr_size);
+
+    // if(data_size<0)
+    // {
+    //   printf("Packets not recieved \n");
+    //   return 1;
+    // }
+    
+    
+    close(sockfd);
     return 0;
-}
-
-
 }
