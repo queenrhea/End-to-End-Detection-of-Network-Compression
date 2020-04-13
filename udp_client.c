@@ -1,86 +1,68 @@
-#define PCKT_LEN 8192
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
 
+#define PORT     9876
+#define MAXLINE 65536
 
-struct sockaddr_in serv_addr; // Server address data structure.
-struct hostent *server;      // Server data structure.
+#define PCKT_LEN 16
 
-sockfd = socket( AF_INET, SOCK_DGRAM, IPPROTO_UDP ); // Create a UDP socket.
+int main() {
+    int sockfd;
+    char buffer[MAXLINE];
+    char *hello = "Hello from client";
+    struct sockaddr_in     servaddr;
 
-if ( sockfd < 0 )
-  error( "ERROR opening socket" );
+    // Creating socket file descriptor
+    if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
+        perror("socket creation failed");
+        exit(EXIT_FAILURE);
+    }
 
-server = gethostbyname( host_name ); // Convert URL to IP.
+    memset(&servaddr, 0, sizeof(servaddr));
+    
+    // Filling server information
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_port = htons(PORT);
+    servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
-if ( server == NULL )
-  error( "ERROR, no such host" );
+    // buffer to hold the packet
+    char buffer_p[PCKT_LEN];
 
+	// set the buffer to 0 for all bytes
+    memset(buffer_p, 0, PCKT_LEN);
+    
+    int n, len, rc;
+    
+    sendto(sockfd, (const char *)hello, strlen(hello),
+        0, (const struct sockaddr *) &servaddr,
+            sizeof(servaddr));
+    printf("Hello message sent.\n");
 
-serv_addr.sin_family = AF_INET;
+    //sendto(sockfd, buffer_p, len, unsigned int flags,
+//const struct sockaddr *to, socklen_t tolen);
 
-
-
-
-int sendto(int sockfd, const void *msg, int len, unsigned int flags,
-const struct sockaddr *to, socklen_t tolen);
-
-
-// buffer to hold the packet
-    char buffer[PCKT_LEN];
-
-// set the buffer to 0 for all bytes
-    memset(buffer, 0, PCKT_LEN);
-
-
-//------------------------------------------
-
-fillBuf(buf,size)
-register char *buf;
-register int size;
-{
-	register int i;
-
-	for ( i = 0; i < size; i++)
-		*buf++ = bufval;
-	bufval++;
-}
-
-
-
-fillBuf(mbuf.buf, BUFSIZE);
-
-	for ( i = 0; i < count; i++) {
-
-		printf("client msg no [%d]\n", i);
-
-		mbuf.count = i;
-
-		/* write msg to remote system
-		 * sock
-		 * buf
-		 * sizeof (union msg)
-		 * 0,
-		 * client
-		 * sizeof (client)
-		 */
-		if( rc = sendto(sock,&mbuf,sizeof (struct msgbuf),0,
-			 &client,sizeof (client)) < 0 ) {
+    if( rc = sendto(sockfd, buffer_p, sizeof(buffer_p),0,(const struct sockaddr *) &servaddr,sizeof(servaddr)) < 0 ) {
 			/* buffers aren't available locally at the moment,
 			 * try again.
 			 */
-			if (errno == ENOBUFS)
-				continue;
+			// if (errno == ENOBUFS)
+			// 	continue;
 			perror("sending datagram");
 			exit(1);
 		}
+        
+    n = recvfrom(sockfd, (char *)buffer, MAXLINE,
+                MSG_WAITALL, (struct sockaddr *) &servaddr,
+                &len);
+    buffer[n] = '\0';
+    printf("Server : %s\n", buffer);
 
-		fromlen = sizeof (struct sockaddr_in);
-
-		/* read acknowledgement from remote system
-		*/
-		if (recvfrom(sock, &ackvar, sizeof(long), 0, &from, &fromlen) < 0 ) {
-			printf("server error: errno %d\n",errno);
-			perror("reading datagram");
-			exit(1);
-		}
-    
-    //	struct sockaddr_in from;
+    close(sockfd);
+    return 0;
+}
