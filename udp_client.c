@@ -29,40 +29,44 @@ int main() {
     // Filling server information
     servaddr.sin_family = AF_INET;
     servaddr.sin_port = htons(PORT);
-    servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    servaddr.sin_addr.s_addr = inet_addr("192.168.1.19");
 
     // buffer to hold the packet
     char buffer_p[PCKT_LEN];
 
-	// set the buffer to 0 for all bytes
+    // set the buffer to 0 for all bytes
     memset(buffer_p, 0, PCKT_LEN);
     
     int n, rc;
     unsigned int len;
-    
+    int i;
+for(i=0; i<20; i++){
     sendto(sockfd, (const char *)hello, strlen(hello),
         0, (const struct sockaddr *) &servaddr,
             sizeof(servaddr));
-    printf("Hello message sent.\n");
+printf("Hello message sent.\n");
+}
+    
 
     //sendto(sockfd, buffer_p, len, unsigned int flags,
 //const struct sockaddr *to, socklen_t tolen);
 
     if( rc == sendto(sockfd, buffer_p, sizeof(buffer_p),0,(const struct sockaddr *) &servaddr,sizeof(servaddr)) != 0 ) {
-			/* buffers aren't available locally at the moment,
-			 * try again.
-			 */
-			// if (errno == ENOBUFS)
-			// 	continue;
-			perror("sending datagram");
-			exit(1);
-		}
-        
+            /* buffers aren't available locally at the moment,
+             * try again.
+             */
+            // if (errno == ENOBUFS)
+            //     continue;
+            perror("sending datagram");
+            exit(1);
+        }
+    for(;;){
     n = recvfrom(sockfd, (char *)buffer, MAXLINE,
                 MSG_WAITALL, (struct sockaddr *) &servaddr,
                 &len);
     buffer[n] = '\0';
     printf("Server : %s\n", buffer);
+    }
 
     close(sockfd);
     return 0;
