@@ -12,6 +12,7 @@
 #define MAXLINE 65536
 
 #define MAXBUF  10 * 1024
+#define ACK 'z'
 
 int main() {
     int sockfd;
@@ -19,6 +20,7 @@ int main() {
     char *hello = "Hello from server";
     struct sockaddr_in servaddr, cliaddr;
     extern int errno;
+    int ackvar = ACK;
 
     char buf[MAXBUF];
     
@@ -61,17 +63,31 @@ int main() {
     printf("Hello message sent.\n");
 
 
-   /* do forever */
-    int rc;
 
-    if (rc==recvfrom(sockfd, buf, MAXBUF, 0, (const struct sockaddr *)&cliaddr, &len) < 0) {
+
+    int rc, current = 0;
+
+    if (rc==recvfrom(sockfd, buf, MAXBUF, MSG_WAITALL, (const struct sockaddr *)&cliaddr, &len) != 0) {
         printf("server error: errno %d\n",errno); 
         //printf("server error: errno %d\n",errno);
         perror("reading datagram");
         exit(1);
     }
 
-    //printf("udpserver: got packet");
+    printf("udpserver: got packet %d\n", current);
+
+    // if(sendto(sockfd,&ackvar,sizeof(long), 0, (const struct sockaddr *) &cliaddr, &len) != 0) {
+        
+    //     perror("sendto");
+
+    //     // if (errno == ENOBUFS)
+    //     //     continue;
+    //     exit(1);
+    // }
+    // current++;
+
+
+    printf("Client : %s\n", buf);
 
     // int data_size, saddr_size;
 
