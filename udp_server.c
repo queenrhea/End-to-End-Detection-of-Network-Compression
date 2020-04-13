@@ -9,7 +9,8 @@
 #include <errno.h>
 
 #define PORT     9876
-#define MAXLINE 65536
+#define DESTPORT 8765
+#define MAXLINE 65536 //1100
 
 #define MAXBUF  10 * 1024
 #define ACK 'z'
@@ -35,7 +36,7 @@ int main() {
     
     // Filling server information
     servaddr.sin_family = AF_INET; // IPv4
-    servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    servaddr.sin_addr.s_addr = inet_addr("192.168.1.19");
     servaddr.sin_port = htons(PORT);
     
     // Bind the socket with the server address
@@ -52,29 +53,38 @@ int main() {
 
     len = sizeof(cliaddr); //len is value/resuslt
 
+    for(;;){
     n = recvfrom(sockfd, (char *)buffer, MAXLINE,
                 MSG_WAITALL, ( struct sockaddr *) &cliaddr,
                 &len);
+ 
+    int i;
+    for(i=0; i<n; i++){
+    printf("%02x",buffer[i]);
+    }
     buffer[n] = '\0';
     printf("Client : %s\n", buffer);
+    printf("n:%d\n",n);
     sendto(sockfd, (const char *)hello, strlen(hello),
         0, (const struct sockaddr *) &cliaddr,
             len);
     printf("Hello message sent.\n");
+    }
+
 
 
 
 
     int rc, current = 0;
 
-    if (rc==recvfrom(sockfd, buf, MAXBUF, MSG_WAITALL, (const struct sockaddr *)&cliaddr, &len) != 0) {
-        printf("server error: errno %d\n",errno); 
+   /* if (rc==recvfrom(sockfd, buf, MAXBUF, MSG_WAITALL, (const struct sockaddr *)&cliaddr, &len) != 0) {
+        printf("server error: errno %d\n",errno);
         //printf("server error: errno %d\n",errno);
         perror("reading datagram");
         exit(1);
     }
 
-    printf("udpserver: got packet %d\n", current);
+    printf("udpserver: got packet %d\n", current); */
 
     // if(sendto(sockfd,&ackvar,sizeof(long), 0, (const struct sockaddr *) &cliaddr, &len) != 0) {
         
