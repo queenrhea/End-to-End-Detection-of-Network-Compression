@@ -11,7 +11,6 @@
 #define MAX 1024 
 #define PORT 9876 
 
-
 int main() 
 { 
     int sockfd, connfd; 
@@ -61,7 +60,26 @@ int main()
     } 
     else
         printf("Server accepted the client.\n"); 
+
+    FILE *fp;
+
+    int ch = 0;
+    fp = fopen("myconfig2.ini", "a");
+    int words;
+
+    read(connfd, &words, sizeof(int));
+
+    while(ch != words) {
+        read(connfd, buffer, 255);
+        fprintf(fp, "%s", buffer);
+        ch++;
+    }
+
+    strtok(words, "=");
+
+    printf("File has been received successfully.\n");
   
+    close(connfd);
     close(sockfd); 
 
     }
