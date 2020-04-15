@@ -1,0 +1,13 @@
+{
+    "serverip": "192.168.1.19",
+    "srcportudp": 9876,
+    "destportudp": 8765,
+    "destporttcphead": "x",
+    "destporttcptail": "y",
+    "portnumtcp": 22,
+    "payload": 1024,
+    "intermtime": 15,
+    "numudppackets": 60000,
+    "ttl": 255
+}
+
