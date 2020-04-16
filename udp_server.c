@@ -9,8 +9,8 @@
 #include <errno.h>
 #include "json-c/json.h"
 
-#define PORT     9876
-#define DESTPORT 8765
+#define SRC_PORT 9876
+#define DST_PORT 8765
 #define MAXLINE 1100
 
 #define MAXBUF  10 * 1024
@@ -106,15 +106,20 @@ int main(int argc, char **argv) {
         perror("socket creation failed");
         exit(EXIT_FAILURE);
     }
-    
-    memset(&servaddr, 0, sizeof(servaddr));
-    memset(&cliaddr, 0, sizeof(cliaddr));
 
-    
+
+    memset(&cliaddr, 0, sizeof(cliaddr));
+    //Filling client information
+    cliaddr.sin_family = AF_INET; // IPv4
+    cliaddr.sin_addr.s_addr = inet_addr("192.168.1.19");
+    cliaddr.sin_port = htons(SRC_PORT);
+
+
+    memset(&servaddr, 0, sizeof(servaddr));
     // Filling server information
     servaddr.sin_family = AF_INET; // IPv4
     servaddr.sin_addr.s_addr = inet_addr("192.168.1.19");
-    servaddr.sin_port = htons(PORT);
+    servaddr.sin_port = htons(DST_PORT);
     
     // Bind the socket with the server address
     if ( bind(sockfd, (const struct sockaddr *)&servaddr,
@@ -123,6 +128,9 @@ int main(int argc, char **argv) {
         perror("bind failed");
         exit(EXIT_FAILURE);
     }
+    
+    // "ntohs(peer_addr.sin_port)" function is for finding port number of client 
+    //printf("connection established with PORT : %d\n", ntohs(servaddr.sin_port));
 
     
     int n;
@@ -130,7 +138,7 @@ int main(int argc, char **argv) {
 
     len = sizeof(cliaddr); //len is value/resuslt
 
-    for(;;){
+    //for(;;){
     n = recvfrom(sockfd, (char *)buffer, MAXLINE,
                 MSG_WAITALL, ( struct sockaddr *) &cliaddr,
                 &len);
@@ -146,49 +154,18 @@ int main(int argc, char **argv) {
         0, (const struct sockaddr *) &cliaddr,
             len);
     printf("Hello message sent.\n");
-    }
+    //}
 
-
-
-
-
-    /*int rc, current = 0;
-
-    if (rc==recvfrom(sockfd, buf, MAXBUF, MSG_WAITALL, (const struct sockaddr *)&cliaddr, &len) != 0) {
-        printf("server error: errno %d\n",errno);
-        //printf("server error: errno %d\n",errno);
-        perror("reading datagram");
-        exit(1);
-    }
-
-    printf("udpserver: got packet %d\n", current); */
-
-    // if(sendto(sockfd,&ackvar,sizeof(long), 0, (const struct sockaddr *) &cliaddr, &len) != 0) {
-        
-    //     perror("sendto");
-
-    //     // if (errno == ENOBUFS)
-    //     //     continue;
-    //     exit(1);
-    // }
-    // current++;
-
-
-    //printf("Client : %s\n", buf);
-
-    // int data_size, saddr_size;
-
-    
-    // saddr_size = sizeof(servaddr);
-    // printf("waiting for data...");
-    // data_size = recvfrom(sockfd, buf, MAXBUF, 0, (struct sockaddr*) &servaddr, (socklen_t*)&saddr_size);
-
-    // if(data_size<0)
-    // {
-    //   printf("Packets not recieved \n");
-    //   return 1;
-    // }
-    
+    /*int m;
+    m = recvfrom(sockfd, (char *)buffer, sizeof(buffer),
+                MSG_WAITALL, ( struct sockaddr *) &cliaddr,
+                &len);
+    printf("Received random bits\n");
+ 
+    int x;
+    for(x=0; x<m; x++){
+    printf("Random: %x",buffer[x]);
+    }  */  
     
     close(sockfd);
     return 0;
