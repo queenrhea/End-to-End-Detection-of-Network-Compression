@@ -6,15 +6,12 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
-#include <errno.h>
 #include "json-c/json.h"
+#include <time.h>
 
 #define SRC_PORT 9876
 #define DST_PORT 8765
 #define MAXLINE 1100
-
-#define MAXBUF  10 * 1024
-#define ACK 'z'
 
 int main(int argc, char **argv) {
     
@@ -89,6 +86,7 @@ int main(int argc, char **argv) {
 
     int ttl2 = json_object_get_int(ttl);
     //printf("TTL for the UDP Packets: %d\n", ttl2);
+
     /* JSON PARSING ENDS */
 
 
@@ -96,10 +94,6 @@ int main(int argc, char **argv) {
     char buffer[MAXLINE];
     char *hello = "Hello from server";
     struct sockaddr_in servaddr, cliaddr;
-    extern int errno;
-    int ackvar = ACK;
-
-    //char buf[MAXBUF];
     
     // Creating socket file descriptor
     if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
@@ -111,14 +105,14 @@ int main(int argc, char **argv) {
     memset(&cliaddr, 0, sizeof(cliaddr));
     //Filling client information
     cliaddr.sin_family = AF_INET; // IPv4
-    cliaddr.sin_addr.s_addr = inet_addr("192.168.1.19");
+    cliaddr.sin_addr.s_addr = inet_addr("192.168.1.21");
     cliaddr.sin_port = htons(SRC_PORT);
 
 
     memset(&servaddr, 0, sizeof(servaddr));
     // Filling server information
     servaddr.sin_family = AF_INET; // IPv4
-    servaddr.sin_addr.s_addr = inet_addr("192.168.1.19");
+    servaddr.sin_addr.s_addr = inet_addr("192.168.1.4");
     servaddr.sin_port = htons(DST_PORT);
     
     // Bind the socket with the server address
@@ -129,10 +123,7 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
     
-    // "ntohs(peer_addr.sin_port)" function is for finding port number of client 
-    //printf("connection established with PORT : %d\n", ntohs(servaddr.sin_port));
 
-    
     int n;
     unsigned int len;
 
@@ -143,12 +134,13 @@ int main(int argc, char **argv) {
                 MSG_WAITALL, ( struct sockaddr *) &cliaddr,
                 &len);
  
+    printf("Low entropy: ");
     int i;
     for(i=0; i<n; i++){
-    printf("%x",buffer[i]);
+       printf("%x",buffer[i]);
     }
     buffer[n] = '\0';
-    printf("Client : %s\n", buffer);
+    //printf("Client : %s\n", buffer);
     printf("n:%d\n",n);
     sendto(sockfd, (const char *)hello, strlen(hello),
         0, (const struct sockaddr *) &cliaddr,
@@ -156,16 +148,30 @@ int main(int argc, char **argv) {
     printf("Hello message sent.\n");
     //}
 
-    /*int m;
+    //**** END OF LOW ENTROPY
+
+
+    //5 SECOND WAIT
+    printf("Waiting...\n");
+    sleep(5);
+    printf("Done waiting.\n");
+
+
+
+    //**** HIGH ENTROPY
+    int m;
     m = recvfrom(sockfd, (char *)buffer, sizeof(buffer),
                 MSG_WAITALL, ( struct sockaddr *) &cliaddr,
                 &len);
     printf("Received random bits\n");
  
+    printf("High entropy: ");
     int x;
     for(x=0; x<m; x++){
-    printf("Random: %x",buffer[x]);
-    }  */  
+       printf("%u",buffer[x]);
+    }
+
+    printf("\nBye.\n");
     
     close(sockfd);
     return 0;
