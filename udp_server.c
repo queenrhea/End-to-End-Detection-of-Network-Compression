@@ -106,14 +106,14 @@ int main(int argc, char **argv) {
     //Filling client information
     cliaddr.sin_family = AF_INET; // IPv4
     cliaddr.sin_addr.s_addr = inet_addr("192.168.1.21");
-    cliaddr.sin_port = htons(SRC_PORT);
+    cliaddr.sin_port = htons(srcportudp2);
 
 
     memset(&servaddr, 0, sizeof(servaddr));
     // Filling server information
     servaddr.sin_family = AF_INET; // IPv4
     servaddr.sin_addr.s_addr = inet_addr("192.168.1.4");
-    servaddr.sin_port = htons(DST_PORT);
+    servaddr.sin_port = htons(destportudp2);
     
     // Bind the socket with the server address
     if ( bind(sockfd, (const struct sockaddr *)&servaddr,
