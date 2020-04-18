@@ -8,6 +8,7 @@
 #include <netinet/in.h>
 #include "json-c/json.h"
 #include <time.h>
+#include <fcntl.h>
 
 #define SRC_PORT 9876
 #define DST_PORT 8765
@@ -110,9 +111,20 @@ int main(int argc, char **argv) {
     servaddr.sin_port = htons(destportudp2);
     servaddr.sin_addr.s_addr = inet_addr("192.168.1.4");
 
+    //*******DON'T FRAGMENT FLAG*******//
+    int val = 1;
+
+    if (setsockopt(sockfd, IPPROTO_IP, IP_MTU_DISCOVER, &val, sizeof(val)) < 0){
+        printf("Not successful.\n");
+    }
+
+    else {
+        printf("Don't fragment flag set to 1.\n");
+    }
+
     // set the buffer to 0 for all bytes
     memset(buffer, 0, MAXLINE);
-    
+
     int n;
     unsigned int len;
     int i;
@@ -125,11 +137,11 @@ int main(int argc, char **argv) {
     
 
     //for(;;){
-    n = recvfrom(sockfd, (char *)buffer, MAXLINE,
+    /*n = recvfrom(sockfd, (char *)buffer, MAXLINE,
                 MSG_WAITALL, (struct sockaddr *) &servaddr,
                 &len);
     buffer[n] = '\0';
-    printf("Server : %s\n", buffer);
+    printf("Server : %s\n", buffer);*/
     //}
 
 
@@ -141,32 +153,53 @@ int main(int argc, char **argv) {
     printf("Done waiting\n");
     //********* HIGH ENTROPY
 
-    unsigned int randval;
+    /*unsigned int randval;
 
     FILE *f;
 
 
-    f = fopen("/dev/urandom", "r");
+    f = fopen("/dev/random", "r");
 
     if(f == NULL) {
         printf("File not found.\n");
         exit(0);
     }
 
-    fread(&randval, sizeof(randval), 1, f);
+    int p;
+    int q=0;
+    int count = 50;
 
-    printf("Hi1\n");
+    while(q<20){
+        int ch;
+        ch = getc(f);
+        printf("\t%d\n", ch);
+        q++;
+    }
+
+    char list[count];
+    for(int a = 0; i< count; ++i){
+        *(list + i) = getc(f);
+    }
+
+    printf("\t%d\n", list);*/
+
+    //fread(&randval, sizeof(randval), 1, f);*/
+
+    int r;
+    int fd = open("/dev/urandom", O_RDONLY);
+    read(fd, buffer, sizeof(buffer));
+    close(fd);
 
   
     //***********COPY BUFFER OF RANDOM BITS TO PAYLOAD
 
-    memcpy(&buffer, &randval, sizeof(buffer)); //copying src to dest, with sizeof(dest)
+    //memcpy(&buffer, &randval, sizeof(buffer)); //copying src to dest, with sizeof(dest)
 
     printf("Buffer: ");
     int y;
     int z = sizeof(buffer);
     for(y=0; y<z; y++){
-        printf("%u",buffer[z]);
+        printf("%u",buffer[y]);
     }
 
     //*****SEND THIS TO SERVER?
@@ -179,7 +212,8 @@ int main(int argc, char **argv) {
     //}
 
 
-    printf("Random value: %u\n", randval);
+    //printf("Random value: %u\n", randval);
+    //printf("Buffer: %u\n",buffer[p]);
     printf("Bye.\n");
 
 
