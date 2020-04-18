@@ -92,7 +92,7 @@ int main(int argc, char **argv) {
 
     int sockfd;
     char buffer[MAXLINE];
-    char *hello = "Hello from server";
+    //char *hello = "Hello from server";
     struct sockaddr_in servaddr, cliaddr;
     
     // Creating socket file descriptor
@@ -114,7 +114,7 @@ int main(int argc, char **argv) {
     servaddr.sin_family = AF_INET; // IPv4
     servaddr.sin_addr.s_addr = inet_addr("192.168.1.4");
     servaddr.sin_port = htons(destportudp2);
-    
+
     // Bind the socket with the server address
     if ( bind(sockfd, (const struct sockaddr *)&servaddr,
             sizeof(servaddr)) < 0 )
@@ -122,7 +122,6 @@ int main(int argc, char **argv) {
         perror("bind failed");
         exit(EXIT_FAILURE);
     }
-    
 
     int n;
     unsigned int len;
@@ -140,12 +139,11 @@ int main(int argc, char **argv) {
        printf("%x",buffer[i]);
     }
     buffer[n] = '\0';
-    //printf("Client : %s\n", buffer);
     printf("n:%d\n",n);
-    sendto(sockfd, (const char *)hello, strlen(hello),
+    /*sendto(sockfd, (const char *)hello, strlen(hello),
         0, (const struct sockaddr *) &cliaddr,
             len);
-    printf("Hello message sent.\n");
+    printf("Hello message sent.\n");*/
     //}
 
     //**** END OF LOW ENTROPY
