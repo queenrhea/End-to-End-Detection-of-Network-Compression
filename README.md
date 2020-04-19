@@ -1,17 +1,21 @@
 # End-to-End-Detection-of-Network-Compression
 By: Rhea Arora and Angie Preciado
 
-Project Description: Implemented two network applications to detect whether network compression is present and locate the compression link on the network path. One application is a client/server application and the other application is a standalone application which works in an uncooperative environment. 
+# Introduction
 
-# Instructions for compiling and running
+Implemented network compression detection in a client/server application. The purpose of the project is to implement the end-to-end approach which is used to detect compression to save end-host resources by not compressing more data at the intermediate nodes.
 
-Uses json-c library for parsing the configuration file.
+# Requirements
+
+This project uses json-c library for parsing the configuration file.
 
 To install json-c, run this command on the the terminal: 
 
     sudo apt install libjson-c-dev
 
 And follow the instructions here: https://github.com/json-c/json-c/blob/master/README.md#buildunix
+
+# Instructions for compiling and running
 
 TO COMPILE PROGRAMS:
 
