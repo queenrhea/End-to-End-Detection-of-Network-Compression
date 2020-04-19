@@ -2,21 +2,18 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <netdb.h> 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <ctype.h>
 #include <netinet/in.h>
 #include "json-c/json.h"
 #include <time.h>
 #include <fcntl.h>
-
-#define SRC_PORT 9876
-#define DST_PORT 8765
-#define MAXLINE 1100
-
-#define PCKT_LEN 16
-
-int main(int argc, char **argv) {
+ 
+int main(int argc, char **argv)
+{ 
 
     /* JSON PARSING */
 
@@ -61,45 +58,64 @@ int main(int argc, char **argv) {
     json_object_object_get_ex(parsed_json, "ttl", &ttl);
 
     char *serverip2 = json_object_get_string(serverip);
-    //printf("Server IP: %s\n",serverip2);
 
     int srcportudp2 = json_object_get_int(srcportudp);
-    //printf("Source Port UDP: %d\n", srcportudp2);
 
     int destportudp2 = json_object_get_int(destportudp);
-    //printf("Destination Port UDP: %d\n", destportudp2);
 
     char *destporttcphead2 = json_object_get_string(destporttcphead);
-    //printf("Destination Port TCP Head: %s\n",destporttcphead2);
 
     char *destporttcptail2 = json_object_get_string(destporttcptail);
-    //printf("Destination Port TCP Tail: %s\n",destporttcptail2);
 
     char *portnumtcp2 = json_object_get_string(portnumtcp);
-    //printf("Port Number TCP: %s\n",portnumtcp2);
 
     int payload2 = json_object_get_int(payload);
-    //printf("Payload: %d\n", payload2);
 
     int intermtime2 = json_object_get_int(intermtime);
-    //printf("Inter-Measurement Time: %d\n", intermtime2);
 
     int numudppackets2 = json_object_get_int(numudppackets);
-    //printf("The Number of UDP Packets in the UDP Pakcet Train: %d\n", numudppackets2);
 
     int ttl2 = json_object_get_int(ttl);
-    //printf("TTL for the UDP Packets: %d\n", ttl2);
 
     /* JSON PARSING ENDS */
 
 
+    /* TCP CONNECTION */
+
+    int client_socket, connfd; 
+    char buffer[payload2]; 
+    struct sockaddr_in cliaddr; 
+  
+    //Socket creation
+    client_socket = socket(AF_INET, SOCK_STREAM, 0); 
+    if (client_socket == -1) { 
+        printf("Socket creation failed...\n"); 
+        exit(0); 
+    } 
+    else
+        printf("Socket successfully created..\n"); 
+  
+    //Assign IP, PORT 
+    cliaddr.sin_family = AF_INET; 
+    cliaddr.sin_addr.s_addr = inet_addr("192.168.1.4"); 
+    cliaddr.sin_port = htons(srcportudp2);
+
+  
+    //Connect the client socket to server socket 
+    if (connect(client_socket, (const struct sockaddr *)&cliaddr, sizeof(cliaddr)) != 0) { 
+        printf("Connection with the server failed...\n"); 
+        exit(0); 
+    } 
+    else
+        printf("Connected to the server.\n\n");
+
+    /* UDP */
+
     int sockfd;
-    char buffer[MAXLINE];
-    char *hello = "Hello from client";
-    struct sockaddr_in     servaddr;
+    struct sockaddr_in servaddr;
 
     // Creating socket file descriptor
-    if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
+    if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
         perror("socket creation failed");
         exit(EXIT_FAILURE);
     }
@@ -115,109 +131,86 @@ int main(int argc, char **argv) {
     int val = 1;
 
     if (setsockopt(sockfd, IPPROTO_IP, IP_MTU_DISCOVER, &val, sizeof(val)) < 0){
-        printf("Not successful.\n");
+        printf("Not successful.\n\n");
     }
 
     else {
-        printf("Don't fragment flag set to 1.\n");
+        printf("Don't fragment flag set to 1.\n\n");
     }
 
     // set the buffer to 0 for all bytes
-    memset(buffer, 0, MAXLINE);
+    memset(buffer, 0, payload2);
 
+    float threshold = 100;
     int n;
     unsigned int len;
     int i;
-    for(i=0; i<10; i++){
-        sendto(sockfd, (char *)buffer, MAXLINE,
+    clock_t start1, end1;
+    start1 = clock();
+    for(i=0; i<numudppackets2; i++){
+        sendto(sockfd, (char *)buffer, sizeof(buffer),
             0, (const struct sockaddr *) &servaddr,
             sizeof(servaddr));
-        printf("Hello message sent.\n");
+
+    }
+    end1 = clock();
+
+    int seconds_short_int_low = (int) (end1 - start1) / CLOCKS_PER_SEC;
+    int milliseconds_low = seconds_short_int_low * 1000;
+
+    printf("It took %d milliseconds to complete low entropy.\n", (milliseconds_low));
+
+    /* COMPRESSION DETECTION FOR LOW ENTROPY */
+    if(milliseconds_low > threshold) {
+        printf("Compression detected!\n\n");
+    }
+    else {
+        printf("No compression was detected.\n\n");
     }
     
-
-    //for(;;){
-    /*n = recvfrom(sockfd, (char *)buffer, MAXLINE,
-                MSG_WAITALL, (struct sockaddr *) &servaddr,
-                &len);
-    buffer[n] = '\0';
-    printf("Server : %s\n", buffer);*/
-    //}
-
 
     //******AFTER LOW ENTROPY DATA
 
     //**********5 SEC. WAIT
     printf("Waiting...\n");
-    sleep(5);
-    printf("Done waiting\n");
+    sleep(intermtime2);
+    printf("Done waiting\n\n");
+
     //********* HIGH ENTROPY
+    clock_t start2, end2;
+    start2 = clock();
+    for(i=0; i<numudppackets2; i++){
+        int r;
+        int fd = open("/dev/urandom", O_RDONLY);
+        read(fd, buffer, sizeof(buffer));
+        close(fd);
 
-    /*unsigned int randval;
-
-    FILE *f;
-
-
-    f = fopen("/dev/random", "r");
-
-    if(f == NULL) {
-        printf("File not found.\n");
-        exit(0);
-    }
-
-    int p;
-    int q=0;
-    int count = 50;
-
-    while(q<20){
-        int ch;
-        ch = getc(f);
-        printf("\t%d\n", ch);
-        q++;
-    }
-
-    char list[count];
-    for(int a = 0; i< count; ++i){
-        *(list + i) = getc(f);
-    }
-
-    printf("\t%d\n", list);*/
-
-    //fread(&randval, sizeof(randval), 1, f);*/
-
-    int r;
-    int fd = open("/dev/urandom", O_RDONLY);
-    read(fd, buffer, sizeof(buffer));
-    close(fd);
-
-  
-    //***********COPY BUFFER OF RANDOM BITS TO PAYLOAD
-
-    //memcpy(&buffer, &randval, sizeof(buffer)); //copying src to dest, with sizeof(dest)
-
-    printf("Buffer: ");
-    int y;
-    int z = sizeof(buffer);
-    for(y=0; y<z; y++){
-        printf("%u",buffer[y]);
-    }
-
-    //*****SEND THIS TO SERVER?
-    int x;
-    //for(x=0; x<2; x++){
+        //*****SEND TO SERVER
+        int x;
         sendto(sockfd, (char *)buffer, sizeof(buffer),
             0, (const struct sockaddr *) &servaddr,
             sizeof(servaddr));
-        printf("\nBuffer sent.\n");
-    //}
+    }
+    end2 = clock();
+    float seconds_short_int_high = (float) (end2 - start2) / CLOCKS_PER_SEC;
+    float milliseconds_high = seconds_short_int_high * 1000;
 
+    printf("It took %f milliseconds to complete high entropy.\n", (milliseconds_high));
 
-    //printf("Random value: %u\n", randval);
-    //printf("Buffer: %u\n",buffer[p]);
+    /* COMPRESSION DETECTION FOR HIGH ENTROPY */
+    if(milliseconds_high > threshold) {
+        printf("Compression detected!\n");
+    }
+    else {
+        printf("No compression was detected.\n");
+    }
+  
+
     printf("Bye.\n");
 
-
+    close(client_socket);
     close(sockfd);
-    fclose(fp);
+
     return 0;
+
 }
