@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <netdb.h> 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -9,12 +10,10 @@
 #include "json-c/json.h"
 #include <time.h>
 
-#define SRC_PORT 9876
-#define DST_PORT 8765
-#define MAXLINE 1100
 
-int main(int argc, char **argv) {
-    
+int main(int argc, char **argv)
+{ 
+
     /* JSON PARSING */
 
     char buffer1[1024];
@@ -58,119 +57,146 @@ int main(int argc, char **argv) {
     json_object_object_get_ex(parsed_json, "ttl", &ttl);
 
     char *serverip2 = json_object_get_string(serverip);
-    //printf("Server IP: %s\n",serverip2);
 
     int srcportudp2 = json_object_get_int(srcportudp);
-    //printf("Source Port UDP: %d\n", srcportudp2);
 
     int destportudp2 = json_object_get_int(destportudp);
-    //printf("Destination Port UDP: %d\n", destportudp2);
 
     char *destporttcphead2 = json_object_get_string(destporttcphead);
-    //printf("Destination Port TCP Head: %s\n",destporttcphead2);
 
     char *destporttcptail2 = json_object_get_string(destporttcptail);
-    //printf("Destination Port TCP Tail: %s\n",destporttcptail2);
 
     char *portnumtcp2 = json_object_get_string(portnumtcp);
-    //printf("Port Number TCP: %s\n",portnumtcp2);
 
     int payload2 = json_object_get_int(payload);
-    //printf("Payload: %d\n", payload2);
 
     int intermtime2 = json_object_get_int(intermtime);
-    //printf("Inter-Measurement Time: %d\n", intermtime2);
 
     int numudppackets2 = json_object_get_int(numudppackets);
-    //printf("The Number of UDP Packets in the UDP Pakcet Train: %d\n", numudppackets2);
 
     int ttl2 = json_object_get_int(ttl);
-    //printf("TTL for the UDP Packets: %d\n", ttl2);
 
     /* JSON PARSING ENDS */
 
+    unsigned int len;
+    char buffer[payload2];
+
+    /*TCP CONNECTION SERVER SIDE*/
+
+    int client_socket, connfd; 
+    struct sockaddr_in cliaddr, server; 
+  
+    // socket create and verification 
+    client_socket = socket(AF_INET, SOCK_STREAM, 0); 
+    if (client_socket == -1) { 
+        printf("socket creation failed...\n"); 
+        exit(0); 
+    } 
+    else
+        printf("Socket successfully created..\n"); 
+  
+    // assign IP, PORT 
+    cliaddr.sin_family = AF_INET; // IPv4
+    cliaddr.sin_addr.s_addr = inet_addr("192.168.1.4");
+    cliaddr.sin_port = htons(srcportudp2);  
+  
+    // Binding newly created socket to given IP and verification 
+    if (bind(client_socket, (const struct sockaddr *)&cliaddr,
+            sizeof(cliaddr)) < 0)
+    {
+        perror("Bind failed");
+        exit(EXIT_FAILURE);
+    }
+  
+    // Now server is ready to listen and verification 
+    if ((listen(client_socket, 5)) != 0) { 
+        printf("Listen failed...\n"); 
+        exit(0); 
+    } 
+    else
+        printf("Server is listening..\n"); 
+    len = sizeof(server); 
+  
+    // Accept the data from client 
+    connfd = accept(client_socket, &server, &len); 
+    if (connfd < 0) { 
+        printf("Server accept failed...\n"); 
+        exit(0); 
+    } 
+    else {
+        printf("Server accepted the client.\n"); 
+        printf("TCP Connection Successful.\n");
+
+    }
+
+    /* UDP SERVER */
 
     int sockfd;
-    char buffer[MAXLINE];
-    //char *hello = "Hello from server";
-    struct sockaddr_in servaddr, cliaddr;
+    char *hello = "Hello from server";
+    struct sockaddr_in servaddr, client;
     
     // Creating socket file descriptor
-    if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
+    if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
         perror("socket creation failed");
         exit(EXIT_FAILURE);
     }
 
-
-    memset(&cliaddr, 0, sizeof(cliaddr));
+    memset(&client, 0, sizeof(client));
     //Filling client information
-    cliaddr.sin_family = AF_INET; // IPv4
-    cliaddr.sin_addr.s_addr = inet_addr("192.168.1.21");
-    cliaddr.sin_port = htons(srcportudp2);
-
+    client.sin_family = AF_INET; // IPv4
+    client.sin_addr.s_addr = inet_addr("192.168.1.21");
+    client.sin_port = htons(srcportudp2);
 
     memset(&servaddr, 0, sizeof(servaddr));
+
     // Filling server information
     servaddr.sin_family = AF_INET; // IPv4
     servaddr.sin_addr.s_addr = inet_addr("192.168.1.4");
     servaddr.sin_port = htons(destportudp2);
 
     // Bind the socket with the server address
-    if ( bind(sockfd, (const struct sockaddr *)&servaddr,
+    if (bind(sockfd, (const struct sockaddr *)&servaddr,
             sizeof(servaddr)) < 0 )
     {
         perror("bind failed");
         exit(EXIT_FAILURE);
     }
+    printf("UDP Connection Successful.\n");
 
     int n;
-    unsigned int len;
+    unsigned int len2;
 
-    len = sizeof(cliaddr); //len is value/resuslt
+    len2 = sizeof(client); //len is value/result
 
-    //for(;;){
-    n = recvfrom(sockfd, (char *)buffer, MAXLINE,
-                MSG_WAITALL, ( struct sockaddr *) &cliaddr,
-                &len);
- 
-    printf("Low entropy: ");
     int i;
-    for(i=0; i<n; i++){
-       printf("%x",buffer[i]);
+    for(i=0; i<numudppackets2; i++){
+    n = recvfrom(sockfd, (char *)buffer, sizeof(buffer),
+                MSG_WAITALL, ( struct sockaddr *) &client,
+                &len2);
     }
-    buffer[n] = '\0';
-    printf("n:%d\n",n);
-    /*sendto(sockfd, (const char *)hello, strlen(hello),
-        0, (const struct sockaddr *) &cliaddr,
-            len);
-    printf("Hello message sent.\n");*/
-    //}
+    printf("Received low entropy packets.\n");
 
+    
     //**** END OF LOW ENTROPY
 
-
-    //5 SECOND WAIT
+    //15 SECOND WAIT
     printf("Waiting...\n");
-    sleep(5);
+    sleep(intermtime2);
     printf("Done waiting.\n");
-
-
 
     //**** HIGH ENTROPY
     int m;
+    int h;
+    for(h=0; h<numudppackets2; h++){
     m = recvfrom(sockfd, (char *)buffer, sizeof(buffer),
-                MSG_WAITALL, ( struct sockaddr *) &cliaddr,
-                &len);
-    printf("Received random bits\n");
- 
-    printf("High entropy: ");
-    int x;
-    for(x=0; x<m; x++){
-       printf("%u",buffer[x]);
+                MSG_WAITALL, ( struct sockaddr *) &client,
+                &len2);
     }
-
+    printf("Received high entropy packets.\n");
     printf("\nBye.\n");
     
     close(sockfd);
+    close(client_socket);
+
     return 0;
 }
