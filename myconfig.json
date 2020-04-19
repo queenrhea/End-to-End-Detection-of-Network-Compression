@@ -5,9 +5,8 @@
     "destporttcphead": "x",
     "destporttcptail": "y",
     "portnumtcp": 22,
-    "payload": 1024,
+    "payload": 1100,
     "intermtime": 15,
-    "numudppackets": 60000,
+    "numudppackets": 6000,
     "ttl": 255
 }
-
