@@ -91,8 +91,8 @@ int main(int argc, char **argv)
   
     // assign IP, PORT 
     cliaddr.sin_family = AF_INET; // IPv4
-    cliaddr.sin_addr.s_addr = inet_addr("192.168.1.4");
-    cliaddr.sin_port = htons(srcportudp2);  
+    cliaddr.sin_addr.s_addr = inet_addr("192.168.1.17");
+    cliaddr.sin_port = htons(destportudp2);  
   
     // Binding newly created socket to given IP 
     if (bind(client_socket, (const struct sockaddr *)&cliaddr,
@@ -119,7 +119,7 @@ int main(int argc, char **argv)
     } 
     else {
         printf("Server accepted the client.\n"); 
-        printf("TCP Connection Successful.\n");
+        printf("TCP Connection Successful.\n\n");
     }
 
     /* UDP SERVER */
@@ -137,14 +137,14 @@ int main(int argc, char **argv)
 
     //Filling client information
     client.sin_family = AF_INET; // IPv4
-    client.sin_addr.s_addr = inet_addr("192.168.1.21");
+    client.sin_addr.s_addr = inet_addr("192.168.1.20");
     client.sin_port = htons(srcportudp2);
 
     memset(&servaddr, 0, sizeof(servaddr));
 
     // Filling server information
     servaddr.sin_family = AF_INET; // IPv4
-    servaddr.sin_addr.s_addr = inet_addr("192.168.1.4");
+    servaddr.sin_addr.s_addr = inet_addr("192.168.1.17");
     servaddr.sin_port = htons(destportudp2);
 
     // Bind the socket with the server address
@@ -192,4 +192,3 @@ int main(int argc, char **argv)
 
     return 0;
 }
-
