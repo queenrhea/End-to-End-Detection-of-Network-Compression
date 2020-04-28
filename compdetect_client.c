@@ -91,8 +91,8 @@ int main(int argc, char **argv)
   
     // Assign IP, PORT 
     cliaddr.sin_family = AF_INET; 
-    cliaddr.sin_addr.s_addr = inet_addr("192.168.1.4"); 
-    cliaddr.sin_port = htons(srcportudp2);
+    cliaddr.sin_addr.s_addr = inet_addr("192.168.1.17"); 
+    cliaddr.sin_port = htons(destportudp2);
 
   
     // Connect the client socket to server socket 
@@ -101,7 +101,7 @@ int main(int argc, char **argv)
         exit(0); 
     } 
     else
-        printf("Connected to the server.\n\n");
+        printf("TCP connection from client to the server successful.\n\n");
 
     /* UDP */
 
@@ -119,7 +119,7 @@ int main(int argc, char **argv)
     // Filling server information
     servaddr.sin_family = AF_INET;
     servaddr.sin_port = htons(destportudp2);
-    servaddr.sin_addr.s_addr = inet_addr("192.168.1.4");
+    servaddr.sin_addr.s_addr = inet_addr("192.168.1.17");
 
     /* DON'T FRAGMENT FLAG */
     int val = 1;
@@ -142,15 +142,22 @@ int main(int argc, char **argv)
     clock_t start1, end1;
     start1 = clock();
 
+    
+    int packet_id = 0;
     int i;
+    
     // sending udp packet train for low entropy
     for(i=0; i<numudppackets2; i++){
+        memset(buffer, packet_id, 2);
+        packet_id += 1;
+
         sendto(sockfd, (char *)buffer, sizeof(buffer),
             0, (const struct sockaddr *) &servaddr,
             sizeof(servaddr));
 
     }
     end1 = clock();
+
 
     // calculating the difference between arrival time in first and last packets
     float seconds_short_int_low = (float) (end1 - start1) / CLOCKS_PER_SEC;
@@ -214,4 +221,3 @@ int main(int argc, char **argv)
 
     return 0;
 }
-
