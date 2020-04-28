@@ -8,6 +8,8 @@
 #include <arpa/inet.h>
 #include <ctype.h>
 #include <netinet/in.h>
+#include <netinet/ip.h>
+#include <netinet/udp.h>
 #include "json-c/json.h"
 #include <fcntl.h>
 #include <time.h>
@@ -175,7 +177,7 @@ int main(int argc, char **argv)
 
     // No data/payload just datagram
 
-    char buffer[PCKT_LEN];
+    char buffer[payload2];
 
     // Our own headers' structures
 
@@ -196,13 +198,13 @@ int main(int argc, char **argv)
 
  
 
-    memset(buffer, 0, PCKT_LEN);
+    memset(buffer, 0, payload2);
 
  
 
     // Create a raw socket with UDP protocol
 
-    sd_udp = socket(PF_INET, SOCK_RAW, IPPROTO_UDP);
+    sd_udp = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
     if(sd_udp < 0)
 
@@ -221,7 +223,7 @@ int main(int argc, char **argv)
         printf("socket() - Using SOCK_RAW socket and UDP protocol is OK.\n");
 
 
-    sd_tcp = socket(PF_INET, SOCK_RAW, IPPROTO_TCP);
+    sd_tcp = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
     //------
 
@@ -241,10 +243,10 @@ int main(int argc, char **argv)
 
     if (setsockopt (sd_tcp, IPPROTO_IP, IP_HDRINCL, val, sizeof (one)),0)
     {
-        printf ("Error setting IP_HDRINCL. Error number : %d . Error message : %s \n" , errno , strerror(errno));
+        printf ("Error");
         exit(0);
     }
-
+    printf("hi1\n");
  
 
     // The source is redundant, may be used later if needed
@@ -315,16 +317,16 @@ int main(int argc, char **argv)
 
     udp->udph_len = htons(sizeof(struct udpheader));
 
-    udp->udph_chksum = udp->uph_chksum = csum((unsigned short *)buffer, sizeof(struct ipheader) + sizeof(struct udpheader));
+    udp->udph_chksum = udp->udph_chksum = csum((unsigned short *)buffer, sizeof(struct ipheader) + sizeof(struct udpheader));
 
 
     //TCP
 
-    tcp->tcph_srcport = htons();
+    tcp->tcph_srcport = htons(9998);
 
     // The destination port, we accept through command line
 
-    tcp->tcph_destport = htons();
+    tcp->tcph_destport = htons(9998);
 
     tcp->tcph_seqnum = htonl(1);
 
@@ -340,7 +342,7 @@ int main(int argc, char **argv)
 
     tcp->tcph_fin = 0;
 
-    tcp->tcph_window = htons(32767);
+    tcp->tcph_win = htons(32767);
 
     tcp->tcph_chksum = 0; // Done by kernel
 
@@ -349,15 +351,16 @@ int main(int argc, char **argv)
 
 
 
-
+    printf("hi2\n");
     //Send the SYN packet
-        if ( sendto (sd_tcp, buffer , sizeof(struct iphdr) + sizeof(struct tcphdr) , 0 , (struct sockaddr *) &sin, sizeof (sin)), 0)
+        if ( sendto (sd_tcp, buffer , ip->iph_len , 0 , (struct sockaddr *) &sin, sizeof (sin)) < 0)
         {
-            printf ("Error sending syn packet. Error number : %d . Error message : %s \n" , errno , strerror(errno));
+            printf ("Error sending syn packet.");
             exit(0);
         }
+        printf("SYN packet sent\n");
 
-char buf[IP_MAXPACKET];
+char buf[1000];
   char *ptr;
   int chksumlen = 0;
   int i;
@@ -366,10 +369,7 @@ char buf[IP_MAXPACKET];
 
 //copy ttl in buffer to send
 
-memcpy (ptr, ip->iph_ttl, sizeof (iph_ttl));
-  ptr += sizeof (iph_ttl);
-  chksumlen += sizeof (iph_ttl);
-
+    printf("hi3\n");
     //udp train
     // sending udp packet train for low entropy
     for(i=0; i<numudppackets2; i++){
@@ -378,6 +378,7 @@ memcpy (ptr, ip->iph_ttl, sizeof (iph_ttl));
             sizeof(servaddr));
 
     }
+    printf("Low entropy sent\n");
 
 //send another syn
 
