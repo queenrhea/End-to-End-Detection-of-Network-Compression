@@ -148,6 +148,7 @@ int main(int argc, char **argv)
     
     // sending udp packet train for low entropy
     for(i=0; i<numudppackets2; i++){
+        //setting packet id
         memset(buffer, packet_id, 2);
         packet_id += 1;
 
@@ -192,6 +193,10 @@ int main(int argc, char **argv)
         int fd = open("/dev/urandom", O_RDONLY);
         read(fd, buffer, sizeof(buffer));
         close(fd);
+
+        //setting packet id
+        memset(buffer, packet_id, 2);
+        packet_id += 1;
 
         // send buffer contents to server
         sendto(sockfd, (char *)buffer, sizeof(buffer),
