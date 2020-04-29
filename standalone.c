@@ -17,96 +17,87 @@
 
 struct ipheader {
 
-     unsigned char      iph_ihl:5, iph_ver:4; //ip header & version: ipv4
+    unsigned char      iph_ihl:5, iph_ver:4;
 
-     unsigned char      iph_tos; //type of service
+    unsigned char      iph_tos;
 
-     unsigned short int iph_len;
+    unsigned short int iph_len;
 
-     unsigned short int iph_ident;
+    unsigned short int iph_ident;
 
-     unsigned char      iph_flag;
+    unsigned char      iph_flag;
 
-     unsigned short int iph_offset;
+    unsigned short int iph_offset;
 
-     unsigned char      iph_ttl;
+    unsigned int       iph_ttl;
 
-     unsigned char      iph_protocol;
+    unsigned char      iph_protocol;
 
-     unsigned short int iph_chksum;
+    unsigned short int iph_chksum;
 
-     unsigned int       iph_sourceip;
+    unsigned int       iph_sourceip;
 
-     unsigned int       iph_destip;
+    unsigned int       iph_destip;
 
 };
 
 struct udpheader {
+    unsigned short int udph_srcport;
 
- unsigned short int udph_srcport;
+    unsigned short int udph_destport;
 
- unsigned short int udph_destport;
+    unsigned short int udph_len;
 
- unsigned short int udph_len;
-
- unsigned short int udph_chksum;
+    unsigned short int udph_chksum;
 
 };
 
 struct tcpheader {
 
- unsigned short int tcph_srcport;
+    unsigned short int tcph_srcport;
 
- unsigned short int tcph_destport;
+    unsigned short int tcph_destport;
 
- unsigned int       tcph_seqnum;
+    unsigned int       tcph_seqnum;
 
- unsigned int       tcph_acknum;
+    unsigned int       tcph_acknum;
 
- unsigned char      tcph_reserved:4, tcph_offset:4;
+    unsigned char      tcph_reserved:4, tcph_offset:4;
 
- // unsigned char tcph_flags;
+    unsigned int
 
-  unsigned int
+       tcp_res:4,
 
-       tcp_res1:4,      /*little-endian*/
+       tcph_hlen:4,     //length of tcp header
 
-       tcph_hlen:4,     /*length of tcp header in 32-bit words*/
+       tcph_fin:1,      //finish flag
 
-       tcph_fin:1,      /*Finish flag "fin"*/
+       tcph_syn:1,       
 
-       tcph_syn:1,       /*Synchronize sequence numbers to start a connection*/
+       tcph_rst:1,      //reset flag
 
-       tcph_rst:1,      /*Reset flag */
+       tcph_psh:1,      //push
 
-       tcph_psh:1,      /*Push, sends data to the application*/
+       tcph_ack:1,      //acknowledge
 
-       tcph_ack:1,      /*acknowledge*/
+       tcph_urg:1;      //urgent pointer
 
-       tcph_urg:1,      /*urgent pointer*/
+    unsigned short int tcph_win;
 
-       tcph_res2:2;
+    unsigned short int tcph_chksum;
 
- unsigned short int tcph_win;
-
- unsigned short int tcph_chksum;
-
- unsigned short int tcph_urgptr;
+    unsigned short int tcph_urgptr;
 
 };
 
-unsigned short csum(unsigned short *buf, int nwords)
-
-{       //
+unsigned short csum(unsigned short *buf, int nwords) {
 
         unsigned long sum;
 
-        for(sum=0; nwords>0; nwords--)
-
-                sum += *buf++;
+        for (sum = 0; nwords > 0; nwords--)
+            sum += *buf++;
 
         sum = (sum >> 16) + (sum &0xffff);
-
         sum += (sum >> 16);
 
         return (unsigned short)(~sum);
@@ -175,82 +166,57 @@ int main(int argc, char **argv)
 
     int sd_udp, sd_tcp;
 
-    // No data/payload just datagram
+    char buffer[1000];
+    char buffer2[payload2];
 
-    char buffer[payload2];
 
-    // Our own headers' structures
-
+    //header structs
     struct ipheader *ip = (struct ipheader *) buffer;
-
 
     struct tcpheader *tcp = (struct tcpheader *) (buffer + sizeof(struct ipheader));
 
     struct udpheader *udp = (struct udpheader *) (buffer + sizeof(struct ipheader));
-
-    // Source and destination addresses: IP and port
-
+    
     struct sockaddr_in sin, din, servaddr;
-
-    int one = 1;
-
-    const int *val = &one;
-
  
+    memset(buffer2, 0, payload2);
 
-    memset(buffer, 0, payload2);
-
- 
-
-    // Create a raw socket with UDP protocol
+    //Create a raw socket with UDP protocol
 
     sd_udp = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
-    if(sd_udp < 0)
-
-    {
-
+    if(sd_udp < 0) {
         perror("socket() error");
-
-        // If something wrong just exit
-
-        exit(-1);
-
+        exit(1);
     }
 
-    else
+    else {
+        printf("UDP raw socket established.\n");
+    }
 
-        printf("socket() - Using SOCK_RAW socket and UDP protocol is OK.\n");
 
-
+    //TCP socket
     sd_tcp = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
-    //------
 
-    if(sd_tcp < 0)
-
-    {
-
+    if(sd_tcp < 0) {
        perror("socket() error");
-
-       exit(-1);
-
+       exit(1);
     }
 
-    else
+    else {
+        printf("TCP raw socket established.\n");
+    }
 
-        printf("socket()-SOCK_RAW and tcp protocol is OK.\n");
+    int one = 1;
+    const int *val = &one;
 
-    if (setsockopt (sd_tcp, IPPROTO_IP, IP_HDRINCL, val, sizeof (one)),0)
+    if (setsockopt (sd_tcp, IPPROTO_IP, IP_HDRINCL, val, sizeof (one)) == 0)
     {
-        printf ("Error");
+        printf ("Error\n");
         exit(0);
     }
-    printf("hi1\n");
  
-
-    // The source is redundant, may be used later if needed
-
     // The address family
 
     sin.sin_family = AF_INET;
@@ -265,11 +231,9 @@ int main(int argc, char **argv)
 
     // IP addresses
 
-    sin.sin_addr.s_addr = inet_addr("127.0.0.1");
+    sin.sin_addr.s_addr = inet_addr("192.168.1.16");
 
-    din.sin_addr.s_addr = inet_addr("127.0.0.1");
-
-
+    din.sin_addr.s_addr = inet_addr("192.168.1.16");
 
 
     memset(&servaddr, 0, sizeof(servaddr));
@@ -277,12 +241,13 @@ int main(int argc, char **argv)
     // Filling server information
     servaddr.sin_family = AF_INET;
     servaddr.sin_port = htons(destportudp2);
-    servaddr.sin_addr.s_addr = inet_addr("192.168.1.4");
+    servaddr.sin_addr.s_addr = inet_addr("192.168.1.16");
 
 
+    /***********************************************/
 
 
-
+    //header definitions
     ip->iph_ihl = 5;
 
     ip->iph_ver = 4;
@@ -295,23 +260,20 @@ int main(int argc, char **argv)
 
     ip->iph_offset = 0;
 
-    ip->iph_ttl = 255;
+    ip->iph_ttl = ttl2;
 
-    ip->iph_protocol = 6; // TCP
+    ip->iph_protocol = 6; //TCP
 
-    ip->iph_chksum = 0; // Done by kernel
+    ip->iph_chksum = 0;
 
-    ip->iph_sourceip  = inet_addr("1.2.3.4");
+    ip->iph_sourceip  = inet_addr("192.168.1.16");
 
-    ip->iph_destip = inet_addr("157.32.159.101");
+    ip->iph_destip = inet_addr("192.168.1.16");
 
- 
 
-// UDP header's structure
+    //UDP header's structure
 
     udp->udph_srcport = htons(9999);
-
-    // Destination port number
 
     udp->udph_destport = htons(9999);
 
@@ -323,8 +285,6 @@ int main(int argc, char **argv)
     //TCP
 
     tcp->tcph_srcport = htons(9998);
-
-    // The destination port, we accept through command line
 
     tcp->tcph_destport = htons(9998);
 
@@ -344,43 +304,31 @@ int main(int argc, char **argv)
 
     tcp->tcph_win = htons(32767);
 
-    tcp->tcph_chksum = 0; // Done by kernel
+    tcp->tcph_chksum = 0;
 
     tcp->tcph_urgptr = 0;
 
 
+    /*Send the SYN packet
+    if ( sendto (sd_tcp, buffer , ip->iph_len , 0 , (struct sockaddr *) &sin, sizeof (sin)) < 0)
+    {
+        printf ("Error sending syn packet.\n");
+        exit(EXIT_FAILURE);
+    }
+    printf("SYN packet sent\n");*/
 
+    int i;
 
-    printf("hi2\n");
-    //Send the SYN packet
-        if ( sendto (sd_tcp, buffer , ip->iph_len , 0 , (struct sockaddr *) &sin, sizeof (sin)) < 0)
-        {
-            printf ("Error sending syn packet.");
-            exit(0);
-        }
-        printf("SYN packet sent\n");
-
-char buf[1000];
-  char *ptr;
-  int chksumlen = 0;
-  int i;
-
-  ptr = &buf[0];  // ptr points to beginning of buffer buf
-
-//copy ttl in buffer to send
-
-    printf("hi3\n");
-    //udp train
-    // sending udp packet train for low entropy
+    //copy ttl in buffer to send
+    //sending udp packet train for low entropy
     for(i=0; i<numudppackets2; i++){
-        sendto(sd_udp, (char *)buffer, sizeof(buffer),
+        setsockopt (sd_udp, IPPROTO_IP, IP_TTL, &ip->iph_ttl, sizeof (ip->iph_ttl));
+        sendto(sd_udp, (char *)buffer2, sizeof(buffer2),
             0, (const struct sockaddr *) &servaddr,
             sizeof(servaddr));
-
     }
     printf("Low entropy sent\n");
 
-//send another syn
 
-//trigger rst (increment?)
+    return 0;
 }
