@@ -23,6 +23,8 @@ TO COMPILE PROGRAMS:
     
     For server: gcc compdetect_server.c -ljson-c
     
+    For standalone: gcc standalone.c -ljson-c
+    
 TO RUN PROGRAMS: 
     
     ./a.out myconfig.json
